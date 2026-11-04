@@ -1,0 +1,22 @@
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+
+# Sensitive Terraform variables
+*.tfvars
+*.tfvars.json
+
+# Credentials
+.aws/
+.env
+.env.*
+*.pem
+*.key
+
+# IDE
+.vscode/
