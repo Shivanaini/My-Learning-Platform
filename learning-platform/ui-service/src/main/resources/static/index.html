@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LearnHub – Sign in</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<div class="auth-page">
+    <section class="auth-hero">
+        <h1>🎓 LearnHub</h1>
+        <p>Your learning platform. Sign in to watch lectures, or upload new ones if you are an instructor.</p>
+        <ul>
+            <li>Video, audio, PDF and slide lectures</li>
+            <li>Organise lectures by course</li>
+            <li>Stream directly in the browser</li>
+        </ul>
+    </section>
+
+    <section class="auth-panel">
+        <!-- Login form -->
+        <div class="auth-card" id="loginCard">
+            <h2>Welcome back</h2>
+            <p class="sub">Sign in to continue to your lectures</p>
+            <div id="loginError" class="alert error hidden"></div>
+            <form id="loginForm" autocomplete="on">
+                <div class="field">
+                    <label for="loginUsername">Username</label>
+                    <input type="text" id="loginUsername" required autofocus>
+                </div>
+                <div class="field">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button class="btn block" type="submit" id="loginBtn">Sign in</button>
+            </form>
+            <div class="auth-switch">No account? <a href="#" id="showRegister">Create one</a></div>
+            <div class="demo-box">
+                <strong>Demo accounts</strong><br>
+                Instructor: <code>instructor</code> / <code>instructor123</code><br>
+                Student: <code>student</code> / <code>student123</code>
+            </div>
+        </div>
+
+        <!-- Register form -->
+        <div class="auth-card hidden" id="registerCard">
+            <h2>Create account</h2>
+            <p class="sub">Join LearnHub in a few seconds</p>
+            <div id="registerError" class="alert error hidden"></div>
+            <form id="registerForm">
+                <div class="field">
+                    <label for="regFullName">Full name</label>
+                    <input type="text" id="regFullName" required>
+                </div>
+                <div class="field">
+                    <label for="regUsername">Username</label>
+                    <input type="text" id="regUsername" required minlength="3">
+                </div>
+                <div class="field">
+                    <label for="regEmail">Email</label>
+                    <input type="email" id="regEmail">
+                </div>
+                <div class="field">
+                    <label for="regPassword">Password</label>
+                    <input type="password" id="regPassword" required minlength="6">
+                </div>
+                <div class="field">
+                    <label for="regRole">I am a</label>
+                    <select id="regRole">
+                        <option value="STUDENT">Student</option>
+                        <option value="INSTRUCTOR">Instructor</option>
+                    </select>
+                </div>
+                <button class="btn block" type="submit" id="registerBtn">Create account</button>
+            </form>
+            <div class="auth-switch">Already registered? <a href="#" id="showLogin">Sign in</a></div>
+        </div>
+    </section>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/login.js"></script>
+</body>
+</html>

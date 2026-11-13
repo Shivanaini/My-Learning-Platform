@@ -1,0 +1,75 @@
+# Run everything (with MySQL) in Docker:
+#   mvn clean package -DskipTests
+#   docker compose up --build
+# Then open http://localhost:8080
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      retries: 10
+
+  discovery-server:
+    build: ./discovery-server
+    ports:
+      - "8761:8761"
+    environment:
+      EUREKA_HOSTNAME: discovery-server
+
+  auth-service:
+    build: ./auth-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+    environment: &common-env
+      SPRING_PROFILES_ACTIVE: mysql
+      DB_HOST: mysql
+      DB_USER: root
+      DB_PASSWORD: root
+      EUREKA_URL: http://discovery-server:8761/eureka
+      JWT_SECRET: change-this-secret-key-to-something-long-and-random-1234567890
+
+  lecture-service:
+    build: ./lecture-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+    environment:
+      <<: *common-env
+      STORAGE_LOCATION: /data/uploads
+    volumes:
+      - lecture-files:/data/uploads
+
+  ui-service:
+    build: ./ui-service
+    depends_on:
+      - discovery-server
+    environment:
+      EUREKA_URL: http://discovery-server:8761/eureka
+
+  api-gateway:
+    build: ./api-gateway
+    depends_on:
+      - discovery-server
+      - auth-service
+      - lecture-service
+      - ui-service
+    ports:
+      - "8080:8080"
+    environment:
+      EUREKA_URL: http://discovery-server:8761/eureka
+
+volumes:
+  mysql-data:
+  lecture-files:

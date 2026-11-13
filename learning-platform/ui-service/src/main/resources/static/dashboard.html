@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LearnHub – Lectures</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<header class="topbar">
+    <div class="brand">🎓 LearnHub</div>
+    <div class="user-box">
+        <div class="avatar" id="avatar">?</div>
+        <div>
+            <div class="user-name" id="userName"></div>
+            <span class="role-badge" id="userRole"></span>
+        </div>
+        <button class="btn secondary small" id="logoutBtn">Log out</button>
+    </div>
+</header>
+
+<div class="layout">
+    <nav class="sidebar">
+        <a class="nav-item active">📚 Lectures</a>
+    </nav>
+
+    <main class="main">
+        <!-- ===== Lectures module ===== -->
+        <div class="page-head">
+            <div>
+                <h1>Lectures</h1>
+                <p id="lectureCount">Loading…</p>
+            </div>
+            <button class="btn hidden" id="openUploadBtn">⬆ Upload lecture</button>
+        </div>
+
+        <div class="toolbar">
+            <input type="search" id="searchInput" placeholder="Search lectures…">
+            <select id="courseFilter">
+                <option value="">All courses</option>
+            </select>
+        </div>
+
+        <div id="pageError" class="alert error hidden"></div>
+        <div class="grid" id="lectureGrid"></div>
+        <div class="empty hidden" id="emptyState">
+            <div class="icon">📭</div>
+            <p id="emptyText">No lectures yet.</p>
+        </div>
+    </main>
+</div>
+
+<!-- Upload modal -->
+<div class="modal-backdrop hidden" id="uploadModal">
+    <div class="modal">
+        <div class="modal-head">
+            <h3>Upload lecture</h3>
+            <button class="icon-btn" data-close="uploadModal" aria-label="Close">×</button>
+        </div>
+        <form id="uploadForm">
+            <div class="modal-body">
+                <div id="uploadError" class="alert error hidden"></div>
+                <div class="field">
+                    <label for="upTitle">Title *</label>
+                    <input type="text" id="upTitle" required maxlength="200" placeholder="e.g. Introduction to Spring Boot">
+                </div>
+                <div class="field">
+                    <label for="upCourse">Course</label>
+                    <input type="text" id="upCourse" list="courseList" maxlength="100" placeholder="e.g. Java Microservices">
+                    <datalist id="courseList"></datalist>
+                </div>
+                <div class="field">
+                    <label for="upDescription">Description</label>
+                    <textarea id="upDescription" maxlength="2000" placeholder="What will students learn?"></textarea>
+                </div>
+                <div class="field">
+                    <label>Lecture file *</label>
+                    <div class="dropzone" id="dropzone">
+                        <div>📁 <strong>Click to choose</strong> or drag &amp; drop a file here</div>
+                        <div style="font-size:12px;margin-top:6px">Video (mp4, webm, mov…), audio, PDF, PPT/PPTX, DOC/DOCX, images · up to 1 GB</div>
+                        <div id="fileName" style="margin-top:10px;font-weight:600;color:#1d2433"></div>
+                    </div>
+                    <input type="file" id="upFile" class="hidden"
+                           accept="video/*,audio/*,image/*,.pdf,.ppt,.pptx,.doc,.docx,.txt,.zip">
+                    <div class="progress hidden" id="progress"><div id="progressBar"></div></div>
+                </div>
+            </div>
+            <div class="modal-foot">
+                <button type="button" class="btn secondary" data-close="uploadModal">Cancel</button>
+                <button type="submit" class="btn" id="uploadBtn">Upload</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Viewer modal -->
+<div class="modal-backdrop hidden" id="viewerModal">
+    <div class="modal wide">
+        <div class="modal-head">
+            <h3 id="viewerTitle"></h3>
+            <button class="icon-btn" data-close="viewerModal" aria-label="Close">×</button>
+        </div>
+        <div class="modal-body viewer">
+            <div id="viewerContent"></div>
+            <div class="viewer-info" id="viewerInfo"></div>
+        </div>
+        <div class="modal-foot">
+            <a class="btn secondary" id="viewerDownload">⬇ Download</a>
+            <button type="button" class="btn" data-close="viewerModal">Close</button>
+        </div>
+    </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/dashboard.js"></script>
+</body>
+</html>

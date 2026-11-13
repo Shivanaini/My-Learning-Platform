@@ -1,0 +1,40 @@
+# The gateway is the single entry point: http://localhost:8080
+# Browser -> Gateway -> (auth-service | lecture-service | ui-service), resolved via Eureka.
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/auth/**
+        - id: lecture-service
+          uri: lb://lecture-service
+          predicates:
+            - Path=/api/lectures/**
+        # UI must be last: catches everything else (/, /dashboard.html, /js/**, /css/**)
+        - id: ui-service
+          uri: lb://ui-service
+          predicates:
+            - Path=/**
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 300s
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
