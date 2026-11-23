@@ -65,7 +65,7 @@ resource "aws_db_instance" "this" {
 
   multi_az = false
 
-  backup_retention_period = 7
+  backup_retention_period = 1
 
   skip_final_snapshot = true
 
