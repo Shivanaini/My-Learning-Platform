@@ -14,6 +14,12 @@ pipeline {
             defaultValue: false,
             description: 'Apply Terraform changes after reviewing the plan'
         )
+
+        booleanParam(
+            name: 'RUN_DESTROY',
+            defaultValue: false,
+            description: 'Destroy AWS infrastructure after reviewing and approving the destroy plan'
+        )
     }
 
     environment {
@@ -23,6 +29,16 @@ pipeline {
     }
 
     stages {
+
+        stage('Validate Parameters') {
+            steps {
+                script {
+                    if (params.RUN_APPLY && params.RUN_DESTROY) {
+                        error('RUN_APPLY and RUN_DESTROY cannot both be true. Select only one.')
+                    }
+                }
+            }
+        }
 
         stage('Checkout') {
             steps {
@@ -38,70 +54,67 @@ pipeline {
             }
         }
 
-        
-stage('Terraform Init') {
-    steps {
-        withCredentials([
-            usernamePassword(
-                credentialsId: 'aws-credentials',
-                usernameVariable: 'AWS_ACCESS_KEY_ID',
-                passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-            )
-        ]) {
-            dir('learning-platform-infra-repo/environments/dev') {
-                sh '''
-                    set +x
-                    terraform init -input=false
-                '''
+        stage('Terraform Init') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'aws-credentials',
+                        usernameVariable: 'AWS_ACCESS_KEY_ID',
+                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                    )
+                ]) {
+                    dir('learning-platform-infra-repo/environments/dev') {
+                        sh '''
+                            set +x
+                            terraform init -input=false
+                        '''
+                    }
+                }
             }
         }
-    }
-}
 
-        
-stage('Import Existing Secrets') {
-    steps {
-        dir('learning-platform-infra-repo/environments/dev') {
-            withCredentials([
-                usernamePassword(
-                    credentialsId: 'aws-credentials',
-                    usernameVariable: 'AWS_ACCESS_KEY_ID',
-                    passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                ),
-                file(
-                    credentialsId: 'dev-tfvars',
-                    variable: 'TFVARS_FILE'
-                )
-            ]) {
-                sh '''
-                    set -e
+        stage('Import Existing Secrets') {
+            steps {
+                dir('learning-platform-infra-repo/environments/dev') {
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: 'aws-credentials',
+                            usernameVariable: 'AWS_ACCESS_KEY_ID',
+                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                        ),
+                        file(
+                            credentialsId: 'dev-tfvars',
+                            variable: 'TFVARS_FILE'
+                        )
+                    ]) {
+                        sh '''
+                            set -e
+                            set +x
 
-                    export AWS_DEFAULT_REGION=ap-southeast-2
+                            export AWS_DEFAULT_REGION=ap-southeast-2
 
-                    if terraform state list | grep -Fxq 'module.secrets_manager.aws_secretsmanager_secret.database'; then
-                        echo "Database secret already imported. Skipping."
-                    else
-                        terraform import -input=false \
-                          -var-file="$TFVARS_FILE" \
-                          'module.secrets_manager.aws_secretsmanager_secret.database' \
-                          'arn:aws:secretsmanager:ap-southeast-2:709604006144:secret:learning-platform/dev/database-zj8Q0B'
-                    fi
+                            if terraform state list | grep -Fxq 'module.secrets_manager.aws_secretsmanager_secret.database'; then
+                                echo "Database secret already imported. Skipping."
+                            else
+                                terraform import -input=false \
+                                  -var-file="$TFVARS_FILE" \
+                                  'module.secrets_manager.aws_secretsmanager_secret.database' \
+                                  'arn:aws:secretsmanager:ap-southeast-2:709604006144:secret:learning-platform/dev/database-zj8Q0B'
+                            fi
 
-                    if terraform state list | grep -Fxq 'module.secrets_manager.aws_secretsmanager_secret.jwt'; then
-                        echo "JWT secret already imported. Skipping."
-                    else
-                        terraform import -input=false \
-                          -var-file="$TFVARS_FILE" \
-                          'module.secrets_manager.aws_secretsmanager_secret.jwt' \
-                          'arn:aws:secretsmanager:ap-southeast-2:709604006144:secret:learning-platform/dev/jwt-9sURUD'
-                    fi
-                '''
+                            if terraform state list | grep -Fxq 'module.secrets_manager.aws_secretsmanager_secret.jwt'; then
+                                echo "JWT secret already imported. Skipping."
+                            else
+                                terraform import -input=false \
+                                  -var-file="$TFVARS_FILE" \
+                                  'module.secrets_manager.aws_secretsmanager_secret.jwt' \
+                                  'arn:aws:secretsmanager:ap-southeast-2:709604006144:secret:learning-platform/dev/jwt-9sURUD'
+                            fi
+                        '''
+                    }
+                }
             }
         }
-    }
-}
-
-
 
         stage('Terraform Validate') {
             steps {
@@ -112,6 +125,12 @@ stage('Import Existing Secrets') {
         }
 
         stage('Terraform Plan') {
+            when {
+                expression {
+                    return !params.RUN_DESTROY
+                }
+            }
+
             steps {
                 withCredentials([
                     usernamePassword(
@@ -129,7 +148,9 @@ stage('Import Existing Secrets') {
                             set +x
 
                             aws sts get-caller-identity
+
                             terraform state list
+
                             terraform plan \
                                 -input=false \
                                 -var-file="$TFVARS_FILE" \
@@ -174,6 +195,86 @@ stage('Import Existing Secrets') {
                         sh '''
                             set +x
                             terraform apply -input=false tfplan
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Terraform Destroy Plan') {
+            when {
+                expression {
+                    return params.RUN_DESTROY
+                }
+            }
+
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'aws-credentials',
+                        usernameVariable: 'AWS_ACCESS_KEY_ID',
+                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ),
+                    file(
+                        credentialsId: 'dev-tfvars',
+                        variable: 'TFVARS_FILE'
+                    )
+                ]) {
+                    dir('learning-platform-infra-repo/environments/dev') {
+                        sh '''
+                            set +x
+
+                            aws sts get-caller-identity
+
+                            terraform state list
+
+                            terraform plan \
+                                -destroy \
+                                -input=false \
+                                -var-file="$TFVARS_FILE" \
+                                -out=tfdestroyplan
+
+                            echo "Destroy plan generated successfully."
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Terraform Destroy Approval') {
+            when {
+                expression {
+                    return params.RUN_DESTROY
+                }
+            }
+
+            steps {
+                input(
+                    message: 'WARNING: This will destroy the AWS infrastructure. Have you reviewed the destroy plan and confirmed that important data is backed up?',
+                    ok: 'Approve Terraform Destroy'
+                )
+            }
+        }
+
+        stage('Terraform Destroy') {
+            when {
+                expression {
+                    return params.RUN_DESTROY
+                }
+            }
+
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'aws-credentials',
+                        usernameVariable: 'AWS_ACCESS_KEY_ID',
+                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                    )
+                ]) {
+                    dir('learning-platform-infra-repo/environments/dev') {
+                        sh '''
+                            set +x
+                            terraform apply -input=false tfdestroyplan
                         '''
                     }
                 }
