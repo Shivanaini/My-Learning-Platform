@@ -38,13 +38,26 @@ pipeline {
             }
         }
 
-        stage('Terraform Init') {
-            steps {
-                dir('learning-platform-infra-repo/environments/dev') {
-                    sh 'terraform init -input=false'
-                }
+        
+stage('Terraform Init') {
+    steps {
+        withCredentials([
+            usernamePassword(
+                credentialsId: 'aws-credentials',
+                usernameVariable: 'AWS_ACCESS_KEY_ID',
+                passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+            )
+        ]) {
+            dir('learning-platform-infra-repo/environments/dev') {
+                sh '''
+                    set +x
+                    terraform init -input=false
+                '''
             }
         }
+    }
+}
+
 
         stage('Terraform Validate') {
             steps {
