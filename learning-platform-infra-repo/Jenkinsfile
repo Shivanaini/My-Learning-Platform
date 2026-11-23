@@ -85,7 +85,7 @@ stage('Terraform Init') {
                             set +x
 
                             aws sts get-caller-identity
-
+                            terraform state list
                             terraform plan \
                                 -input=false \
                                 -var-file="$TFVARS_FILE" \
