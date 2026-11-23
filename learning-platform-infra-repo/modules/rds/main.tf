@@ -49,8 +49,8 @@ resource "aws_db_instance" "this" {
   storage_type      = "gp3"
   storage_encrypted = true
 
-  db_name  = var.db_name
-  username = var.db_username
+  db_name                     = var.db_name
+  username                    = var.db_username
   manage_master_user_password = true
 
   port = 5432

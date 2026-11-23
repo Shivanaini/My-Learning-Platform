@@ -94,15 +94,15 @@ resource "aws_ecs_service" "this" {
   cluster         = var.cluster_id
   task_definition = aws_ecs_task_definition.this[each.key].arn
 
-  launch_type      = "FARGATE"
-  desired_count    = each.value.desired_count
-  platform_version = "LATEST"
+  launch_type                       = "FARGATE"
+  desired_count                     = each.value.desired_count
+  platform_version                  = "LATEST"
   health_check_grace_period_seconds = 120
- 
+
   deployment_circuit_breaker {
     enable   = true
     rollback = true
-}
+  }
 
   network_configuration {
     subnets          = var.subnet_ids
