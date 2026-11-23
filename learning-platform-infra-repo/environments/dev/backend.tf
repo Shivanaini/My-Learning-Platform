@@ -1,8 +1,8 @@
 terraform {
   backend "s3" {
-    bucket       = "shakra-learning-platform-terraform-state"
+    bucket       = "my-learning-platform-terraform-state-2026"
     key          = "learning-platform/dev/terraform.tfstate"
-    region       = "ap-south-1"
+    region       = "ap-southeast-2"
     encrypt      = true
     use_lockfile = true
   }
