@@ -17,8 +17,8 @@ pipeline {
     }
 
     environment {
-        AWS_DEFAULT_REGION = 'ap-south-1'
-        AWS_REGION         = 'ap-south-1'
+        AWS_DEFAULT_REGION = 'ap-southeast-2'
+        AWS_REGION         = 'ap-southeast-2'
         TF_IN_AUTOMATION   = 'true'
     }
 
