@@ -58,6 +58,50 @@ stage('Terraform Init') {
     }
 }
 
+        
+stage('Import Existing Secrets') {
+    steps {
+        dir('learning-platform-infra-repo/environments/dev') {
+            withCredentials([
+                usernamePassword(
+                    credentialsId: 'aws-credentials',
+                    usernameVariable: 'AWS_ACCESS_KEY_ID',
+                    passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                ),
+                file(
+                    credentialsId: 'dev-tfvars',
+                    variable: 'TFVARS_FILE'
+                )
+            ]) {
+                sh '''
+                    set -e
+
+                    export AWS_DEFAULT_REGION=ap-southeast-2
+
+                    if terraform state list | grep -Fxq 'module.secrets_manager.aws_secretsmanager_secret.database'; then
+                        echo "Database secret already imported. Skipping."
+                    else
+                        terraform import -input=false \
+                          -var-file="$TFVARS_FILE" \
+                          'module.secrets_manager.aws_secretsmanager_secret.database' \
+                          'arn:aws:secretsmanager:ap-southeast-2:709604006144:secret:learning-platform/dev/database-zj8Q0B'
+                    fi
+
+                    if terraform state list | grep -Fxq 'module.secrets_manager.aws_secretsmanager_secret.jwt'; then
+                        echo "JWT secret already imported. Skipping."
+                    else
+                        terraform import -input=false \
+                          -var-file="$TFVARS_FILE" \
+                          'module.secrets_manager.aws_secretsmanager_secret.jwt' \
+                          'arn:aws:secretsmanager:ap-southeast-2:709604006144:secret:learning-platform/dev/jwt-9sURUD'
+                    fi
+                '''
+            }
+        }
+    }
+}
+
+
 
         stage('Terraform Validate') {
             steps {
